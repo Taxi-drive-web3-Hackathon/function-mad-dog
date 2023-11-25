@@ -1,96 +1,108 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.7;
+pragma solidity ^0.8.4;
 
-import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
+import {FunctionsClient} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/FunctionsClient.sol";
+import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
+import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/libraries/FunctionsRequest.sol";
 
-/**
- * @title The APIConsumer contract
- * @notice An API Consumer contract that makes GET requests to obtain 24h trading volume of ETH in USD
- */
-contract APIConsumer is ChainlinkClient {
-    using Chainlink for Chainlink.Request;
+contract ApiConsumer is FunctionsClient, ConfirmedOwner {
+	using FunctionsRequest for FunctionsRequest.Request;
 
-    uint256 public volume;
-    address private immutable oracle;
-    bytes32 private immutable jobId;
-    uint256 private immutable fee;
+	bytes32 public s_lastRequestId;
+	bytes public s_lastResponse;
+	bytes public s_lastError;
 
-    event DataFullfilled(uint256 volume);
+	error UnexpectedRequestID(bytes32 requestId);
 
-    constructor(
-        address _oracle,
-        bytes32 _jobId,
-        uint256 _fee,
-        address _link
-    ) {
-        if (_link == address(0)) {
-            setPublicChainlinkToken();
-        } else {
-            setChainlinkToken(_link);
-        }
-        oracle = _oracle;
-        jobId = _jobId;
-        fee = _fee;
-    }
+	event Response(bytes32 indexed requestId, bytes response, bytes err);
 
-    /**
-     * @notice Creates a Chainlink request to retrieve API response, find the target
-     * data, then multiply by 1000000000000000000 (to remove decimal places from data).
-     *
-     * @return requestId - id of the request
-     */
-    function requestVolumeData() public returns (bytes32 requestId) {
-        Chainlink.Request memory request = buildChainlinkRequest(
-            jobId,
-            address(this),
-            this.fulfill.selector
-        );
+	constructor(
+		address router
+	) FunctionsClient(router) ConfirmedOwner(msg.sender) {}
 
-        // Set the URL to perform the GET request on
-        request.add(
-            "get",
-            "https://min-api.cryptocompare.com/data/pricemultifull?fsyms=ETH&tsyms=USD"
-        );
+	/**
+	* @notice Send a simple request
+	* @param source JavaScript source code
+	* @param encryptedSecretsUrls Encrypted URLs where to fetch user secrets
+	* @param donHostedSecretsSlotID Don hosted secrets slotId
+	* @param donHostedSecretsVersion Don hosted secrets version
+	* @param args List of arguments accessible from within the source code
+	* @param bytesArgs Array of bytes arguments, represented as hex strings
+	* @param subscriptionId Billing ID
+	*/
+	function sendRequest(
+		string memory source,
+		bytes memory encryptedSecretsUrls,
+		uint8 donHostedSecretsSlotID,
+		uint64 donHostedSecretsVersion,
+		string[] memory args,
+		bytes[] memory bytesArgs,
+		uint64 subscriptionId,
+		uint32 gasLimit,
+		bytes32 donID
+	) external onlyOwner returns (bytes32 requestId) {
+		FunctionsRequest.Request memory req;
+		req.initializeRequestForInlineJavaScript(source);
+		if (encryptedSecretsUrls.length > 0)
+			req.addSecretsReference(encryptedSecretsUrls);
+		else if (donHostedSecretsVersion > 0) {
+			req.addDONHostedSecrets(
+				donHostedSecretsSlotID,
+				donHostedSecretsVersion
+			);
+		}
 
-        // Set the path to find the desired data in the API response, where the response format is:
-        // {"RAW":
-        //   {"ETH":
-        //    {"USD":
-        //     {
-        //      "VOLUME24HOUR": xxx.xxx,
-        //     }
-        //    }
-        //   }
-        //  }
-        // Chainlink node versions prior to 1.0.0 supported this format
-        // request.add("path", "RAW.ETH.USD.VOLUME24HOUR");
-        request.add("path", "RAW,ETH,USD,VOLUME24HOUR");
+		if (args.length > 0) req.setArgs(args);
+		if (bytesArgs.length > 0) req.setBytesArgs(bytesArgs);
+		s_lastRequestId = _sendRequest(
+			req.encodeCBOR(),
+			subscriptionId,
+			gasLimit,
+			donID
+		);
+		return s_lastRequestId;
+	}
 
-        // Multiply the result by 1000000000000000000 to remove decimals
-        int256 timesAmount = 10**18;
-        request.addInt("times", timesAmount);
+	/**
+	* @notice Send a pre-encoded CBOR request
+	* @param request CBOR-encoded request data
+	* @param subscriptionId Billing ID
+	* @param gasLimit The maximum amount of gas the request can consume
+	* @param donID ID of the job to be invoked
+	* @return requestId The ID of the sent request
+	*/
+	function sendRequestCBOR(
+		bytes memory request,
+		uint64 subscriptionId,
+		uint32 gasLimit,
+		bytes32 donID
+	) external onlyOwner returns (bytes32 requestId) {
+		s_lastRequestId = _sendRequest(
+			request,
+			subscriptionId,
+			gasLimit,
+			donID
+		);
+		return s_lastRequestId;
+	}
 
-        // Sends the request
-        return sendChainlinkRequestTo(oracle, request, fee);
-    }
-
-    /**
-     * @notice Receives the response in the form of uint256
-     *
-     * @param _requestId - id of the request
-     * @param _volume - response; requested 24h trading volume of ETH in USD
-     */
-    function fulfill(bytes32 _requestId, uint256 _volume)
-        public
-        recordChainlinkFulfillment(_requestId)
-    {
-        volume = _volume;
-        emit DataFullfilled(_volume);
-    }
-
-    /**
-     * @notice Witdraws LINK from the contract
-     * @dev Implement a withdraw function to avoid locking your LINK in the contract
-     */
-    function withdrawLink() external {}
+	/**
+	* @notice Store latest result/error
+	* @param requestId The request ID, returned by sendRequest()
+	* @param response Aggregated response from the user code
+	* @param err Aggregated error from the user code or from the execution pipeline
+	* Either response or error parameter will be set, but never both
+	*/
+	function fulfillRequest(
+		bytes32 requestId,
+		bytes memory response,
+		bytes memory err
+	) internal override {
+		if (s_lastRequestId != requestId) {
+			revert UnexpectedRequestID(requestId);
+		}
+		s_lastResponse = response;
+		s_lastError = err;
+		emit Response(requestId, s_lastResponse, s_lastError);
+	}
 }
