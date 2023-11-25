@@ -8,9 +8,9 @@ import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0
 contract ApiConsumer is FunctionsClient, ConfirmedOwner {
 	using FunctionsRequest for FunctionsRequest.Request;
 
-	bytes32 public s_lastRequestId;
-	bytes public s_lastResponse;
-	bytes public s_lastError;
+	bytes32 public sLastRequestId;
+	bytes public sLastResponse;
+	bytes public sLastError;
 
 	error UnexpectedRequestID(bytes32 requestId);
 
@@ -54,13 +54,13 @@ contract ApiConsumer is FunctionsClient, ConfirmedOwner {
 
 		if (args.length > 0) req.setArgs(args);
 		if (bytesArgs.length > 0) req.setBytesArgs(bytesArgs);
-		s_lastRequestId = _sendRequest(
+		slastRequestId = _sendRequest(
 			req.encodeCBOR(),
 			subscriptionId,
 			gasLimit,
 			donID
 		);
-		return s_lastRequestId;
+		return slastRequestId;
 	}
 
 	/**
@@ -77,13 +77,13 @@ contract ApiConsumer is FunctionsClient, ConfirmedOwner {
 		uint32 gasLimit,
 		bytes32 donID
 	) external onlyOwner returns (bytes32 requestId) {
-		s_lastRequestId = _sendRequest(
+		slastRequestId = _sendRequest(
 			request,
 			subscriptionId,
 			gasLimit,
 			donID
 		);
-		return s_lastRequestId;
+		return slastRequestId;
 	}
 
 	/**
@@ -98,11 +98,11 @@ contract ApiConsumer is FunctionsClient, ConfirmedOwner {
 		bytes memory response,
 		bytes memory err
 	) internal override {
-		if (s_lastRequestId != requestId) {
+		if (slastRequestId != requestId) {
 			revert UnexpectedRequestID(requestId);
 		}
-		s_lastResponse = response;
-		s_lastError = err;
-		emit Response(requestId, s_lastResponse, s_lastError);
+		slastResponse = response;
+		slastError = err;
+		emit Response(requestId, slastResponse, slastError);
 	}
 }
