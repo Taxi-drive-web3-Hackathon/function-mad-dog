@@ -72,8 +72,8 @@ contract Vault is Ownable, Pausable, ReentrancyGuard {
   * @param _amount The amount of coins to pay
   * @param _to The address to pay the coins to
   */
-  function payContract(uint256 _amount, address _to) public whenNotPaused nonReentrant {
-    require(msg.sender == paymentContractAddress, "Vault: only payment contract can withdraw");
+  function pay(uint256 _amount, address _to) public whenNotPaused nonReentrant {
+    require(msg.sender == paymentContractAddress, "Vault: only payment contract can pay");
     require(_amount > 0, "Vault: _amount must be greater than zero");
     require(_amount <= vaultBalance, "Vault: _amount must be less than or equal to vault balance");
     require(_to != address(0), "Vault: to address cannot be zero");
