@@ -59,8 +59,8 @@ contract Vault is Ownable, Pausable, ReentrancyGuard {
     require(_amount > 0, "Vault: _amount must be greater than zero");
     require (coin.allowance(msg.sender, address(this)) >= _amount, "Vault: allowance must be greater than or equal to _amount");
 
-    coin.transferFrom(msg.sender, address(this), _amount);
     vaultBalance += _amount;
+    coin.transferFrom(msg.sender, address(this), _amount);
 
     emit Deposit(msg.sender, _amount);
   }
