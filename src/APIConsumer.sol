@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import {FunctionsClient} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/FunctionsClient.sol";
 import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
 import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/libraries/FunctionsRequest.sol";
+import {IPingGo} from "./interfaces/IPingGo.sol";
 
 contract ApiConsumer is FunctionsClient, ConfirmedOwner {
 	using FunctionsRequest for FunctionsRequest.Request;
@@ -12,13 +13,18 @@ contract ApiConsumer is FunctionsClient, ConfirmedOwner {
 	bytes public sLastResponse;
 	bytes public sLastError;
 
+	IPinGo public immutable ping;
+
 	error UnexpectedRequestID(bytes32 requestId);
 
 	event Response(bytes32 indexed requestId, bytes response, bytes err);
 
 	constructor(
-		address router
-	) FunctionsClient(router) ConfirmedOwner(msg.sender) {}
+		address router,
+		address _ping
+	) FunctionsClient(router) ConfirmedOwner(msg.sender) {
+		ping = IPingGo(_ping);
+	}
 
 	/**
 	* @notice Send a simple request
@@ -103,6 +109,9 @@ contract ApiConsumer is FunctionsClient, ConfirmedOwner {
 		}
 		slastResponse = response;
 		slastError = err;
+
+		ping.go(requestId, response, err);
+
 		emit Response(requestId, slastResponse, slastError);
 	}
 }
