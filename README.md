@@ -47,7 +47,7 @@ To get started with Pingo, follow these steps:
 If you haven't already, [install Node.js](https://nodejs.org/).
 If you haven't already, [install Foundry](https://book.getfoundry.sh/).
 
-After start, ensure you have Foundry installed:
+Before start, ensure you have Foundry installed:
 
 ```bash
 $ forge --version
