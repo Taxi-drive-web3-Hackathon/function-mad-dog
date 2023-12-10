@@ -5,20 +5,12 @@ import {FunctionsClient} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_
 import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
 import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/libraries/FunctionsRequest.sol";
 
-interface IPinGo {
-    function pay(bytes32 requestId, bytes memory response, bytes memory err) external;
-}
-
 contract ApiConsumer is FunctionsClient, ConfirmedOwner {
 	using FunctionsRequest for FunctionsRequest.Request;
 
 	bytes32 public slastRequestId;
 	bytes public slastResponse;
 	bytes public slastError;
-
-	IPinGo public ping;
-
-	mapping (uint8 => address) public clients;
 
 	error UnexpectedRequestID(bytes32 requestId);
 
@@ -27,10 +19,6 @@ contract ApiConsumer is FunctionsClient, ConfirmedOwner {
 	constructor(
 		address router
 	) FunctionsClient(router) ConfirmedOwner(msg.sender) {}
-
-	function setPing(address _ping) external onlyOwner {
-		ping = IPinGo(_ping);
-	}
 
 	/**
 	* @notice Send a simple request
@@ -115,10 +103,6 @@ contract ApiConsumer is FunctionsClient, ConfirmedOwner {
 		}
 		slastResponse = response;
 		slastError = err;
-
-
-		if (address(ping) != address(0) || err.length == 0)
-			ping.pay(requestId, response, err);
 
 		emit Response(requestId, slastResponse, slastError);
 	}
