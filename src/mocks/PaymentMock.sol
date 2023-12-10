@@ -1,6 +1,6 @@
 /// SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity 0.8.23;
 
 import {Ownable} from "../../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import {Pausable} from "../../lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
@@ -46,6 +46,6 @@ contract PaymentMock is Ownable, Pausable, ReentrancyGuard {
 
         // Approve the CCIP adapter to spend the tokens and send request to the adapter
         IERC20(_token).approve(address(adapter), _amount);
-        CCIPAdapter(address(adapter)).send(_token, _amount, _to, _destinationChainSelector);
+        ICCIPAdapter(address(adapter)).send(_token, _amount, _to, _destinationChainSelector);
     }
 }

@@ -1,6 +1,6 @@
 /// SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.4;
+pragma solidity 0.8.23;
 
 import {Ownable} from "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import {Pausable} from "../lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
@@ -16,7 +16,7 @@ import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.s
 contract CCIPAdapter is Ownable, Pausable, ReentrancyGuard {
     // The address of the CCIP router contract.
     IRouterClient private router;
-    
+
     IERC20 public link;
 
     // Mapping of destination chain selector to allowlist status

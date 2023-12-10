@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.4;
+pragma solidity 0.8.23;
 
 interface IVault {
   function deposit(address _token, uint256 _amount) external;

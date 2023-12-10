@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity 0.8.23;
 
-import {Owned} from "solmate/src/auth/Owned.sol";
-import {ERC20} from "solmate/src/tokens/ERC20.sol";
+import {Owned} from "../lib/solmate/src/auth/Owned.sol";
+import {ERC20} from "../lib/solmate/src/tokens/ERC20.sol";
 import {ICCIPAdapter} from "./interfaces/ICCIPAdapter.sol";
 import {IVault} from "./interfaces/IVault.sol";
 
@@ -17,7 +17,7 @@ contract PinGo is Owned {
     ICCIPAdapter public adapter;
     mapping(uint8 => VaultData) public vaults;
     mapping(bytes32 => bool) public requests;
-    mapping(uint8 => uint256) public receivers;
+    mapping(uint8 => address) public receivers;
 
     event ExecuteTransfer(address indexed vault, uint256 amount, address receiver);
     event ExecuteCCIP(bytes32 requestId, address indexed vault, uint256 amount, address receiver);
@@ -54,23 +54,28 @@ contract PinGo is Owned {
         require(requests[requestId] == false, "Request already processed");
         requests[requestId] = true;
 
-        (uint8 id, uint8 receiver, uint64 chainId, uint256 amount) = abi.decode(response, (uint8, uint8, uint64, uint256));
+        (uint8 id, uint8 receiverId, uint64 chainId, uint256 amount) = abi.decode(response,
+            (uint8, uint8, uint64, uint256));
+
+        address receiver = receivers[receiverId];
+        IVault vaultContract = IVault(vaults[id].vault);
+        ERC20 token = ERC20(vaults[id].token);
+
         require(vaults[id].active != true && address(vaults[id].vault) != address(0), "User not active");
         require(getBalance(id, vaults[id].token) > 0, "Insufficient balance");
-        require(receivers[receiver] != address(0), "Receiver not found");
+        require(receiver != address(0), "Receiver not found");
 
-        IVault vault = IVault(vaults[id].vault);
         if (chainId == CCIP_CURRENT_CHAIN) {
-            vault.pay(vaults[id].token, amount, receivers[receiver]);
-            emit ExecuteTransfer(vaults[id].vault, amount, receivers[receiver]);
+            vaultContract.pay(vaults[id].token, amount, receiver);
+            emit ExecuteTransfer(address(vaultContract), amount, receiver);
             return;
         }
 
-        require(adapter.allowlistedChains(chainId), "Destination chain is not allowlisted");
-        vault.pay(_token,_amount, address(this));
-        IERC20(_token).approve(address(adapter), _amount);
-        bytest32 ccipRequest = CCIPAdapter(address(adapter)).send(_token, _amount, _to, _destinationChainSelector);
+        require(ICCIPAdapter(address(adapter)).allowlistedChains(chainId), "Destination chain is not allowlisted");
+        vaultContract.pay(address(token), amount, address(this));
+        token.approve(address(adapter), amount);
+        bytes32 ccipRequest = ICCIPAdapter(address(adapter)).send(address(token), amount, receiver, chainId);
 
-        emit ExecuteCCIP(ccipRequest, vaults[id].vault, amount, receivers[receiver]);
+        emit ExecuteCCIP(ccipRequest, address(vaultContract), amount, receiver);
     }
 }
