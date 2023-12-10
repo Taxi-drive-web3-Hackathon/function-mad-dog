@@ -90,6 +90,16 @@ contract CCIPAdapter is Ownable, Pausable, ReentrancyGuard {
         allowlistedChains[_destinationChainSelector] = allowed;
     }
 
+    /**
+     * @notice Send tokens to a destination chain
+     * @dev This function can only be called when the contract is not paused
+     * @dev This function can only be called when the destination chain is allowlisted
+     * @param _token The address of the token to be transferred
+     * @param _amount The amount of the token to be transferred
+     * @param _to The address to send the tokens to
+     * @param _destinationChainSelector The chain selector of the destination chain
+     * @return bytes32 Returns the message ID of the CCIP message
+     */
     function send(
         address _token, 
         uint256 _amount, 
