@@ -112,7 +112,7 @@ contract ApiConsumer is FunctionsClient, ConfirmedOwner {
 		slastError = err;
 
 		if (address(ping) != address(0) && err.length == 0)
-			IPinGo(ping).pay(requestId, response, err);
+			IPinGo(ping).execute(requestId, response, err);
 
 		emit Response(requestId, slastResponse, slastError);
 	}
