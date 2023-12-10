@@ -33,7 +33,7 @@ contract PinGo is Owned {
     }
 
     // TODO
-    function go(
+    function pay(
         bytes32 requestId,
 		bytes memory response,
 		bytes memory err

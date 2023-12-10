@@ -4,26 +4,27 @@ pragma solidity ^0.8.4;
 import {FunctionsClient} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/FunctionsClient.sol";
 import {ConfirmedOwner} from "@chainlink/contracts/src/v0.8/shared/access/ConfirmedOwner.sol";
 import {FunctionsRequest} from "@chainlink/contracts/src/v0.8/functions/dev/v1_0_0/libraries/FunctionsRequest.sol";
-import {IPingGo} from "./interfaces/IPingGo.sol";
+import {IPinGo} from "./interfaces/IPinGo.sol";
 
 contract ApiConsumer is FunctionsClient, ConfirmedOwner {
 	using FunctionsRequest for FunctionsRequest.Request;
 
-	bytes32 public sLastRequestId;
-	bytes public sLastResponse;
-	bytes public sLastError;
+	bytes32 public slastRequestId;
+	bytes public slastResponse;
+	bytes public slastError;
 
-	IPinGo public immutable ping;
+	IPinGo public ping;
 
 	error UnexpectedRequestID(bytes32 requestId);
 
 	event Response(bytes32 indexed requestId, bytes response, bytes err);
 
 	constructor(
-		address router,
-		address _ping
-	) FunctionsClient(router) ConfirmedOwner(msg.sender) {
-		ping = IPingGo(_ping);
+		address router
+	) FunctionsClient(router) ConfirmedOwner(msg.sender) {}
+
+	function setPing(address _ping) external onlyOwner {
+		ping = IPinGo(_ping);
 	}
 
 	/**
@@ -104,13 +105,14 @@ contract ApiConsumer is FunctionsClient, ConfirmedOwner {
 		bytes memory response,
 		bytes memory err
 	) internal override {
-		if (slastRequestId != requestId) {
+        if (slastRequestId != requestId) {
 			revert UnexpectedRequestID(requestId);
 		}
 		slastResponse = response;
 		slastError = err;
 
-		ping.go(requestId, response, err);
+		if (address(ping) != address(0) && err.length == 0)
+			IPinGo(ping).pay(requestId, response, err);
 
 		emit Response(requestId, slastResponse, slastError);
 	}
