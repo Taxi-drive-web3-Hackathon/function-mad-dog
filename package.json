@@ -28,6 +28,7 @@
     "all": "make all"
   },
   "dependencies": {
-    "@chainlink/contracts": "^0.8.0"
+    "@chainlink/contracts": "^0.8.0",
+    "@chainlink/contracts-ccip": "^0.7.3"
   }
 }

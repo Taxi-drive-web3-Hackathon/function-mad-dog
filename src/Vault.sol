@@ -1,6 +1,6 @@
 /// SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.4;
 
 import {Ownable} from "../lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 import {Pausable} from "../lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
@@ -13,12 +13,14 @@ import {IERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20
 * @notice The payment contract can withdraw coins from the vault
 */
 contract Vault is Ownable, Pausable, ReentrancyGuard {
+  // The address of the contract that is allowed to pay coins from the vault
   address public paymentContractAddress;
+  
   bool public initialized;
 
-  event Deposit(address indexed from, uint256 amount);
-  event Pay(address indexed to, uint256 amount);
-  event Withdraw(address indexed to, uint256 amount);
+  event Deposit(address indexed token, address indexed from, uint256 amount);
+  event Pay(address indexed token, address indexed to, uint256 amount);
+  event Withdraw(address indexed token, address indexed to, uint256 amount);
 
   /**
   * @notice Create a new vault
@@ -56,7 +58,7 @@ contract Vault is Ownable, Pausable, ReentrancyGuard {
 
     IERC20(_token).transferFrom(msg.sender, address(this), _amount);
 
-    emit Deposit(msg.sender, _amount);
+    emit Deposit(_token, msg.sender, _amount);
   }
 
   /**
@@ -76,7 +78,7 @@ contract Vault is Ownable, Pausable, ReentrancyGuard {
 
     IERC20(_token).transfer(_to, _amount);
 
-    emit Pay(_to, _amount);
+    emit Pay(_token, _to, _amount);
   }
 
   /**
@@ -93,6 +95,10 @@ contract Vault is Ownable, Pausable, ReentrancyGuard {
 
     IERC20(_token).transfer(msg.sender, _amount);
 
-    emit Withdraw(msg.sender, _amount);
+    emit Withdraw(_token, msg.sender, _amount);
+  }
+
+  function getBalance(address _token) public view returns (uint256) {
+    return IERC20(_token).balanceOf(address(this));
   }
 }
