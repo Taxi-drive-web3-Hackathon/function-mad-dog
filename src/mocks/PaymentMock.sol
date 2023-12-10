@@ -6,19 +6,19 @@ import {Ownable} from "../../lib/openzeppelin-contracts/contracts/access/Ownable
 import {Pausable} from "../../lib/openzeppelin-contracts/contracts/utils/Pausable.sol";
 import {ReentrancyGuard} from "../../lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
 import {IERC20} from "../../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import {Vault} from "../Vault.sol";
-import {CCIPAdapter} from "../CCIPAdapter.sol";
+import {IVault} from "../interfaces/IVault.sol";
+import {ICCIPAdapter} from "../interfaces/ICCIPAdapter.sol";
 
 contract PaymentMock is Ownable, Pausable, ReentrancyGuard {
-    Vault public vault;
-    CCIPAdapter public adapter;
+    IVault public vault;
+    ICCIPAdapter public adapter;
 
     /// Mumbai testnet chain selector
     uint64 public constant CURRENT_CHAIN = 12532609583862916517;
 
     constructor (address _vaultAddress, address _adapter) Ownable(msg.sender) {
-        vault = Vault(_vaultAddress);
-        adapter = CCIPAdapter(_adapter);
+        vault = IVault(_vaultAddress);
+        adapter = ICCIPAdapter(_adapter);
     }
 
     function simulatePay(

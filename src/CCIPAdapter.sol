@@ -204,4 +204,8 @@ contract CCIPAdapter is Ownable, Pausable, ReentrancyGuard {
         require(amount > 0, "CCIPAdapter: Nothing to withdraw");
         IERC20(_token).transfer(msg.sender, amount);
     }
+
+    function getLinkBalance() public view returns (uint256) {
+        return link.balanceOf(address(this));
+    }
 }

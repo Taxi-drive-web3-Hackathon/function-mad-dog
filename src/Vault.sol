@@ -13,7 +13,9 @@ import {IERC20} from "../lib/openzeppelin-contracts/contracts/token/ERC20/IERC20
 * @notice The payment contract can withdraw coins from the vault
 */
 contract Vault is Ownable, Pausable, ReentrancyGuard {
+  // The address of the contract that is allowed to pay coins from the vault
   address public paymentContractAddress;
+  
   bool public initialized;
 
   event Deposit(address indexed token, address indexed from, uint256 amount);
@@ -94,5 +96,9 @@ contract Vault is Ownable, Pausable, ReentrancyGuard {
     IERC20(_token).transfer(msg.sender, _amount);
 
     emit Withdraw(_token, msg.sender, _amount);
+  }
+
+  function getBalance(address _token) public view returns (uint256) {
+    return IERC20(_token).balanceOf(address(this));
   }
 }
