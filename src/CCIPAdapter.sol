@@ -14,24 +14,28 @@ import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.s
 * @notice This contract is used to interact with the Chainlink CCIP
 */
 contract CCIPAdapter is Ownable, Pausable, ReentrancyGuard {
-    address public paymentContractAddress;
-
+    // The address of the CCIP router contract.
     IRouterClient private router;
+    
     IERC20 public link;
 
-    bool public initialized;
+    // Mapping of destination chain selector to allowlist status
+    mapping(uint64 => bool) public allowlistedChains;
 
-    /// Mumbai testnet chain selector
+    // The address of the contract that holds the tokens to be transferred
+    address public paymentContractAddress;
+
+    // Mumbai testnet chain selector
     uint64 public constant CURRENT_CHAIN = 12532609583862916517;
 
-    mapping(uint64 => bool) public allowlistedChains;
+    bool public initialized;
 
     event Send(
         bytes32 indexed messageId, // The unique ID of the message.
         uint64 indexed destinationChainSelector, // The chain selector of the destination chain.
-        address receiver, // The address of the receiver on the destination chain.
+        address to, // The address of the receiver on the destination chain.
         address token, // The token address that was transferred.
-        uint256 tokenAmount, // The token amount that was transferred.
+        uint256 amount, // The token amount that was transferred.
         address feeToken, // the token address used to pay CCIP fees.
         uint256 fees // The fees paid for sending the message.
     );
@@ -109,8 +113,11 @@ contract CCIPAdapter is Ownable, Pausable, ReentrancyGuard {
         require(_amount > 0, "CCIPAdapter: _amount must be greater than zero");
         require(_to != address(0), "CCIPAdapter: _to address cannot be zero");
         require(_token != address(0), "CCIPAdapter: _token address cannot be zero");
+
+        // Transfer the tokens from the payment contract to the CCIPAdapter
         require( IERC20(_token).transferFrom(paymentContractAddress, address(this), _amount), "CCIPAdapter: transfer failed");
 
+        // Build the CCIP message
         Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(
             _to,
             _token,
@@ -118,16 +125,20 @@ contract CCIPAdapter is Ownable, Pausable, ReentrancyGuard {
             address(link)
         );
 
+        // Get the fees for sending the message
         uint256 fees = router.getFee(
             _destinationChainSelector,
             evm2AnyMessage
         );
 
+        // Check if the contract has enough LINK to pay the fees
         require(link.balanceOf(address(this)) >= fees, "CCIPAdapter: insufficient link balance");
 
+        // Approve the router to spend the fees and the token amount
         link.approve(address(router), fees);
         IERC20(_token).approve(address(router), _amount);
 
+        // Send the message to the CCIP router
         bytes32 messageId = router.ccipSend(
             _destinationChainSelector,
             evm2AnyMessage
@@ -152,7 +163,7 @@ contract CCIPAdapter is Ownable, Pausable, ReentrancyGuard {
     /// @param _token The token to be transferred.
     /// @param _amount The amount of the token to be transferred.
     /// @param _feeTokenAddress The address of the token used for fees. Set address(0) for native gas.
-    /// @return Client.EVM2AnyMessage Returns an EVM2AnyMessage struct which contains information for sending a CCIP message.
+    /// @return     /// The address of the LINK token.Client.EVM2AnyMessage Returns an EVM2AnyMessage struct which contains information for sending a CCIP message.
     function _buildCCIPMessage(
         address _receiver,
         address _token,

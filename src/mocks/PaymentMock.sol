@@ -32,14 +32,19 @@ contract PaymentMock is Ownable, Pausable, ReentrancyGuard {
         require(_amount > 0, "PaymentMock: _amount must be greater than zero");
         require(IERC20(_token).balanceOf(address(vault)) >= _amount, "PaymentMock: vault balance must be greater than or equal to _amount");
 
+        // If the destination chain is the current chain, pay directly to the receiver
         if (_destinationChainSelector == CURRENT_CHAIN) {
             vault.pay(_token, _amount, _to);
             return;
         }
 
+        // If the destination chain is not allowlisted, revert
         require(adapter.allowlistedChains(_destinationChainSelector), "PaymentMock: destination chain is not allowlisted");
 
+        // Execute Vault pay to receive the tokens
         vault.pay(_token,_amount, address(this));
+
+        // Approve the CCIP adapter to spend the tokens and send them to the adapter
         IERC20(_token).approve(address(adapter), _amount);
         CCIPAdapter(address(adapter)).send(_token, _amount, _to, _destinationChainSelector);
     }

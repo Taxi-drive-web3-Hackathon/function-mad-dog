@@ -16,9 +16,9 @@ contract Vault is Ownable, Pausable, ReentrancyGuard {
   address public paymentContractAddress;
   bool public initialized;
 
-  event Deposit(address indexed from, uint256 amount);
-  event Pay(address indexed to, uint256 amount);
-  event Withdraw(address indexed to, uint256 amount);
+  event Deposit(address indexed token, address indexed from, uint256 amount);
+  event Pay(address indexed token, address indexed to, uint256 amount);
+  event Withdraw(address indexed token, address indexed to, uint256 amount);
 
   /**
   * @notice Create a new vault
@@ -56,7 +56,7 @@ contract Vault is Ownable, Pausable, ReentrancyGuard {
 
     IERC20(_token).transferFrom(msg.sender, address(this), _amount);
 
-    emit Deposit(msg.sender, _amount);
+    emit Deposit(_token, msg.sender, _amount);
   }
 
   /**
@@ -76,7 +76,7 @@ contract Vault is Ownable, Pausable, ReentrancyGuard {
 
     IERC20(_token).transfer(_to, _amount);
 
-    emit Pay(_to, _amount);
+    emit Pay(_token, _to, _amount);
   }
 
   /**
@@ -93,6 +93,6 @@ contract Vault is Ownable, Pausable, ReentrancyGuard {
 
     IERC20(_token).transfer(msg.sender, _amount);
 
-    emit Withdraw(msg.sender, _amount);
+    emit Withdraw(_token, msg.sender, _amount);
   }
 }
