@@ -14,15 +14,15 @@ contract VaultTest is Test, Events {
     Vault public vault;
 
     address owner = address(0x123);
+    address paymentContractAddress = address(0x999);
     address alice = address(0x456);
     address bob = address(0x789);
-    address paymentContractAddress = address(0x999);
 
     function setUp() public {
         vm.startPrank(owner);
         coin = new ERC20Test();
         vault = new Vault();
-        vault.initialize(address(coin), paymentContractAddress);
+        vault.initialize(paymentContractAddress);
         vm.stopPrank();
     }
 
@@ -38,10 +38,9 @@ contract VaultTest is Test, Events {
         coin.approve(address(vault), amount);
 
         vm.prank(alice);
-        vault.deposit(amount);
+        vault.deposit(address(coin), amount);
 
         assertEq(coin.balanceOf(address(vault)), amount);
-        assertEq(vault.vaultBalance(), amount);
     }
 
     function test_Pay (uint256 amount) public {
@@ -52,12 +51,11 @@ contract VaultTest is Test, Events {
         test_Deposit(amount);
 
         vm.prank(paymentContractAddress);
-        vault.pay(amount, bob);
+        vault.pay(address(coin), amount, bob);
 
 
         assertEq(coin.balanceOf(address(vault)), 0);
         assertEq(coin.balanceOf(bob), amount);
-        assertEq(vault.vaultBalance(), 0);
     }
 
     function test_Withdraw (uint256 amount) public {
@@ -68,10 +66,9 @@ contract VaultTest is Test, Events {
         test_Deposit(amount);
 
         vm.prank(owner);
-        vault.withdraw(amount);
+        vault.withdraw(address(coin), amount);
 
         assertEq(coin.balanceOf(address(vault)), 0);
         assertEq(coin.balanceOf(owner), amount);
-        assertEq(vault.vaultBalance(), 0);
     }
 }
