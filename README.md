@@ -4,32 +4,7 @@ NOTE: This is a work in progress.
 
 ## Overview
 
-Pingo is a Protocol that allows clients to execute seamless crypto payments to any chain that they want.
-
-## Table of Contents
-
-- [Features](#features)
-- [Getting Started](#getting-started)
-- [Usage](#usage)
-- [Smart Contracts](#smart-contracts)
-- [Chains and Addresses](#chains-and-addresses)
-- [Contributing](#contributing)
-- [License](#license)
-
-## Chains and Addresses
-
-### Mumbai
-
-#### Pingo Contracts
-
-- [Pingo]():
-- [APIConsumer]():
-- [CCIPAdapter](https://mumbai.polygonscan.com/address/0xE85d9213C30e2162d339b23BE5744279bcB4B7F8): 
-
-### Chainlink Contracts
-
-- [Functions Subscriper]():
-- [CCIP Router]():
+Pingo is a Protocol that allows clients recieve and execute seamless payments using API integrations (provided by [Chainlink Functions](https://docs.chain.link/chainlink-functions)) and bridges (provided by [Chainlink CCIP](https://dev.chain.link/products/ccip)).
 
 ## Table of Contents
 
@@ -38,6 +13,21 @@ Pingo is a Protocol that allows clients to execute seamless crypto payments to a
 - [Contributing](#contributing)
 - [License](#license)
 - ...
+
+## Chains and Addresses
+
+### Mumbai
+
+#### Pingo Contracts
+
+- [Pingo](https://mumbai.polygonscan.com/address/0x185e6B5505c313c166c6E28154090F8cb3ba02C9):`0x185e6B5505c313c166c6E28154090F8cb3ba02C9`;
+- [APIConsumer](https://mumabi.polygonscan.com/address/0xd6a241Fa0055E68E15d68848CAE3717D9e0A498C):`0xd6a241Fa0055E68E15d68848CAE3717D9e0A498C`;
+- [CCIPAdapter](https://mumbai.polygonscan.com/address/0xE85d9213C30e2162d339b23BE5744279bcB4B7F8): `0xE85d9213C30e2162d339b23BE5744279bcB4B7F8`;
+
+#### Chainlink Contracts
+
+- [Functions]():
+- [CCIP Router]():
 
 ## Getting Started
 
