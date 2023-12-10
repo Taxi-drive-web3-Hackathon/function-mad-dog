@@ -4,7 +4,7 @@ NOTE: This is a work in progress.
 
 ## Overview
 
-Pingo is a Protocol that allows clients recieve and execute seamless payments using API integrations (provided by [Chainlink Functions](https://docs.chain.link/chainlink-functions)) and bridges (provided by [Chainlink CCIP](https://dev.chain.link/products/ccip)).
+Pingo is a Protocol that allows clients execute seamless payments using API integrations (provided by [Chainlink Functions](https://docs.chain.link/chainlink-functions)) and bridges (provided by [Chainlink CCIP](https://dev.chain.link/products/ccip)).
 
 ## Table of Contents
 
