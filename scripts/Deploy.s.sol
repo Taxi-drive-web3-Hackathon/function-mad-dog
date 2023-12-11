@@ -23,15 +23,15 @@ contract PinGoScript is Script {
 				Vault vault = new Vault();
 
 				vault.initialize(address(pin));
-				ERC20(token).approve(address(vault), 1000000000);
-				vault.deposit(token, 1000000000);
+				ERC20(token).approve(address(vault), 100000000000000000);
+				vault.deposit(token, 100000000000000000);
 
 				adapter.initialize(token, address(pin), routerCCIP);
 
 				adapter.allowlistDestinationChain(12532609583862916517, true);
 				adapter.allowlistDestinationChain(14767482510784806043, true);
 				
-				ERC20(link).transfer(address(adapter), 4000000000000000000);
+				ERC20(link).transfer(address(adapter), 2000000000000000000);
 
 				ApiConsumer consumer = new ApiConsumer(routerCCIP);
 				consumer.setPing(address(pin));
